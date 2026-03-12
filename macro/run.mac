@@ -1,0 +1,23 @@
+#----------------------------------------------------------------------------
+# run.mac
+# Geant4 run macro
+
+# Set the random seed for reproducibility
+/random/setSeeds 12345 67890
+
+# Initialize run
+/run/initialize
+
+/gun/particle opticalphoton
+/gun/energy 3 eV
+/gun/position -5 0.3 0.3 cm
+/gun/direction 1 0 0
+/gun/polarization 0 0 1
+
+/tracking/verbose
+# Set number of events to simulate
+/run/beamOn 100
+
+#----------------------------------------------------------------------------
+# Optional: dump geometry to visualize in GDML
+# /geometry/export/gdml detector.gdml

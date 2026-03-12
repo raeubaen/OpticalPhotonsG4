@@ -1,0 +1,51 @@
+# Build directories
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/*.cmake
+/*.dir
+/*.log
+/*.o
+/*.obj
+/*.so
+/*.a
+/*.exe
+/*.dll
+/*.out
+Makefile
+cmake_install.cmake
+
+# Macros / run files that are generated
+*.mac~
+*.log
+
+# ROOT files (if you generate them)
+*.root
+*.root~ 
+
+# Geant4 output files (optional)
+*.csv
+*.txt
+*.dat
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+
+# Editor/IDE
+.vscode/
+.idea/
+*.user
+*.ncb
+*.sln
+*.vcxproj*
+*.xcodeproj/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.pyc
