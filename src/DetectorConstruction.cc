@@ -249,7 +249,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   
     G4VPhysicalVolume* worldPhys = new G4PVPlacement(nullptr, {}, worldLog, "world", nullptr, false, 0);
 
-    G4VPhysicalVolume* wrapPhys = new G4PVPlacement(nullptr, G4ThreeVector(-0.5*geo.wrapW+geo.caloPosX, 0, 0), wrapLog, "wrap", worldLog, 0, 0);
+    G4VPhysicalVolume* wrapPhys = new G4PVPlacement(nullptr, G4ThreeVector(geo.caloPosX, 0, 0), wrapLog, "wrap", worldLog, 0, 0);
     G4VPhysicalVolume* cryPhys = new G4PVPlacement(nullptr, G4ThreeVector(geo.caloPosX, 0, 0), cryLog, "cry", worldLog, 0, 0);
 
     G4VPhysicalVolume* sipmSiPhys = new G4PVPlacement(nullptr, G4ThreeVector(geo.sipmSiSurfDist-0.5*(geo.sipmPackageL-geo.sipmSiThick), 0, 0), sipmSiLog, "sipmSi", sipmPkgLog, 0, 0); 
