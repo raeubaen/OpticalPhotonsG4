@@ -1,3 +1,4 @@
+
 #include <G4LogicalVolumeStore.hh>
 
 #include <sstream>
@@ -84,7 +85,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     resin->SetMaterialPropertiesTable(resin_prop);
 
     std::vector<G4double> PbF2_opticalEn = {
-      0.104 * eV, 0.151 * eV, 0.218 * eV, 0.314 * eV, 0.454 * eV, 0.656 * eV, 0.948 * eV, 1.370 * eV, 1.980 * eV, 2.860 * eV, 4.133 * eV 
+      0.104 * eV, 0.151 * eV, 0.218 * eV, 0.314 * eV, 0.454 * eV, 0.656 * eV, 0.948 * eV, 1.370 * eV, 1.980 * eV, 2.860 * eV, 4.133 * eV
     };
     std::vector<G4double>  PbF2_rindex = {
       1.596, 1.668, 1.701, 1.717, 1.725, 1.731, 1.736, 1.744, 1.762, 1.803, 1.937
@@ -172,30 +173,50 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     cryVis->SetForceSolid(false);
     cryLog->SetVisAttributes(cryVis);
 
-    G4VSolid* _wrapSolid = new G4Box("_wrap", 0.5*(geo.wrapW + geo.cryL), geo.wrapW + 0.5*geo.cryW, geo.wrapW + 0.5*geo.cryW);
-    G4LogicalVolume* _wrapLog = new G4LogicalVolume(_wrapSolid, mylar, "_wrap");
+    // Thickness of the lateral wrap (along Y and Z)
+    G4double wrapThickness = geo.wrapW;  // or any desired thickness
 
-    G4VSolid* wrapSolid = new G4SubtractionSolid("wrap", _wrapSolid, crySolid, 0, G4ThreeVector(0.5*geo.wrapW,0,0));
+    // Base box that fully encloses the crystal + lateral wrap
+    G4VSolid* _wrapSolid = new G4Box(
+        "_wrap",
+        0.5 * geo.cryL - 2*CLHEP::mm,                        // X half-length same as crystal, will subtract crystal fully
+        0.5 * geo.cryW + wrapThickness,        // Y half-length: crystal + wrap thickness
+        0.5 * geo.cryW + wrapThickness         // Z half-length: crystal + wrap thickness
+    );
+
+    // Subtract the crystal to leave only lateral wrap slabs
+    G4VSolid* wrapSolid = new G4SubtractionSolid(
+        "wrap",
+        _wrapSolid,
+        crySolid,              // crystal solid
+        nullptr,               // no rotation
+        G4ThreeVector(0, 0, 0) // aligned centers
+    );
+
+    // Logical volume
     G4LogicalVolume* wrapLog = new G4LogicalVolume(wrapSolid, mylar, "wrap");
+
+    // Visualization attributes
     G4VisAttributes* wrapVis = new G4VisAttributes(G4Colour(1, 1, 1, 0.4));
     wrapVis->SetVisibility(true);
-    wrapVis->SetForceSolid(false);
+    wrapVis->SetForceSolid(true);
     wrapLog->SetVisAttributes(wrapVis);
 
     G4VPhysicalVolume* airgapPhys = nullptr;
     if (geo.sipmAirGap > 0.0) {
-      G4VSolid* airgapSolid = new G4Box("airgap", geo.sipmAirGap / 2, geo.sipmPackageW / 2, geo.sipmPackageW / 2);
+      G4VSolid* airgapSolid = new G4Box("airgap", geo.sipmAirGap / 2, geo.sipmPackageW, geo.sipmPackageW);
       G4LogicalVolume* airgapLog = new G4LogicalVolume(airgapSolid, air, "airgap");
-      G4VisAttributes* airgapVis = new G4VisAttributes(G4Colour(0, 1, 0, 0.4));
+      G4VisAttributes* airgapVis = new G4VisAttributes(G4Colour(0, 1, 0.5, 0.4));
       airgapVis->SetVisibility(true);
-      airgapVis->SetForceSolid(false);
+      airgapVis->SetForceSolid(true);
       airgapLog->SetVisAttributes(airgapVis);
       airgapPhys = new G4PVPlacement(nullptr, G4ThreeVector(0.5*(geo.cryL+geo.sipmAirGap), 0, 0), airgapLog, "airgap", worldLog, 0, 0);
+      airgapPhys = new G4PVPlacement(nullptr, G4ThreeVector(-0.5*(geo.cryL+geo.sipmAirGap), 0, 0), airgapLog, "airgap", worldLog, 0, 0);
     }
 
     G4VSolid* sipmPkgSolid = new G4Box("sipmPkg", geo.sipmPackageL / 2, geo.sipmPackageW / 2, geo.sipmPackageW / 2);
     G4LogicalVolume* sipmPkgLog = new G4LogicalVolume(sipmPkgSolid, resin, "sipmPkg");
-    G4VisAttributes* sipmPkgVis = new G4VisAttributes(G4Colour(1, 1, 0, 1));
+    G4VisAttributes* sipmPkgVis = new G4VisAttributes(G4Colour(1, 1, 0, 0.8));
     sipmPkgVis->SetVisibility(true);
     sipmPkgVis->SetForceSolid(true);
     sipmPkgVis->SetForceWireframe(true);
@@ -234,19 +255,51 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4VPhysicalVolume* sipmSiPhys = new G4PVPlacement(nullptr, G4ThreeVector(geo.sipmSiSurfDist-0.5*(geo.sipmPackageL-geo.sipmSiThick), 0, 0), sipmSiLog, "sipmSi", sipmPkgLog, 0, 0); 
 
     // G4VPhysicalVolume* sipmSiPhys[4];
-    G4VPhysicalVolume* sipmPkgPhys[4];
-    for (int i = 0; i<4; i++) {
+    G4VPhysicalVolume* sipmPkgPhys[8];
+
+    /*for (int i = 0; i<8; i++) {
       G4double x = geo.sipmPos * (2*(i%2)-1);
-      G4double xx = geo.sipmPos * (2*(i>1)-1);
+      G4double xx = geo.sipmPos * (2*((i%4)>1)-1);
       // ostringstream name, nameSi; 
       // name<<"sipmPkg_"<<i;
       // nameSi<<"sipmSi_"<<i;
-      double xPkg = geo.caloPosX + 0.5*(geo.cryL+geo.sipmPackageL)+geo.sipmAirGap;
+      double xPkg = geo.caloPosX + (2*(i/4)-1)*0.5*(geo.cryL+geo.sipmPackageL)+geo.sipmAirGap);
       // double xSi = geo.sipmSiSurfDist-0.5*(geo.sipmPackageL-geo.sipmSiThick);
       // sipmSiPhys[i] = new G4PVPlacement(nullptr, G4ThreeVector(xSi+xPkg, x, xx), sipmSiLog, nameSi.str(), worldLog, 0, i); 
       // sipmSiPhys[i]->SetMotherLogical(sipmPkgLog);
       sipmPkgPhys[i] = new G4PVPlacement(nullptr, G4ThreeVector(xPkg, x, xx), sipmPkgLog, "sipmPkg", worldLog, 0, i);
-    }
+    }*/
+
+    for (int i = 0; i<8; i++) {
+        double y = geo.sipmPos * (2*(i%2)-1);
+        double z = geo.sipmPos * (2*((i%4)>1)-1);
+
+        int side = 2*(i/4) - 1;  // -1 for i=0..3, +1 for i=4..7
+
+        double distance = 0.5*(geo.cryL + geo.sipmPackageL) + geo.sipmAirGap;
+        double xPkg = side * distance;
+
+
+	// Determine rotation for the SiPM inside the package
+        G4RotationMatrix* rot = (side == -1) ? new G4RotationMatrix() : nullptr;
+        if(side == -1) {
+            // Rotate 180 deg around Y to face the crystal
+            rot->rotateY(180*deg);
+        }
+
+        // Place the SiPM package in the world
+        sipmPkgPhys[i] = new G4PVPlacement(
+            rot,
+            G4ThreeVector(xPkg, y, z),
+            sipmPkgLog,
+            "sipmPkg",
+            worldLog,
+            false,
+            i
+        );
+
+
+     }
   //placements
 
   //surfaces
@@ -259,7 +312,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         G4LogicalBorderSurface *bord_wrap = new G4LogicalBorderSurface("bord_wrap", cryPhys, wrapPhys, wrapSurf);
       }
 
-      for (int i = 0; i<4; i++) { 
+      for (int i = 0; i<8; i++) { 
 
         // new G4LogicalBorderSurface("bord_sipmsi_" + std::to_string(i), sipmPkgPhys[i], sipmSiPhys[i], sipmSiSurf); 
 
@@ -267,7 +320,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
           new G4LogicalBorderSurface("bord_crygap_" + std::to_string(i), cryPhys, airgapPhys, cryGapSurf);
           new G4LogicalBorderSurface("bord_gapsipm_" + std::to_string(i), airgapPhys, sipmPkgPhys[i], gapSipmSurf);
         } else {
-          new G4LogicalBorderSurface("bord_crysipm_" + std::to_string(i), cryPhys, sipmPkgPhys[i], crySipmSurf);        
+          new G4LogicalBorderSurface("bord_crysipm_" + std::to_string(i), cryPhys, sipmPkgPhys[i], crySipmSurf);
         }
       }
     }

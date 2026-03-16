@@ -7,6 +7,8 @@
 struct HitData {
     double time_ns;
     double energy_eV;
+    double x_mm, y_mm, z_mm;
+    int sipmID;
 };
 
 class EnergyTimeSD : public G4VSensitiveDetector

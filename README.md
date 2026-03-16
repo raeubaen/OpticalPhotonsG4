@@ -6,6 +6,4 @@ cmake -S .. -B .
 
 make
 
-
-# CrilinSim
 # OpticalPhotonsG4

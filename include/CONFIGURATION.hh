@@ -13,7 +13,7 @@ public:
     {}
 
     int set_cryOption;    // 0=PbF2, 1=PWO
-    int set_usePreshower; // 0=no, 1=yes
+    int set_usePreshower=0; // 0=no, 1=yes
     bool set_etSdOn;      // sensitive detector on/off
     bool set_opticalOn;
     bool set_wrappingOn;

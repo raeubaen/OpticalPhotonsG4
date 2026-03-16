@@ -14,9 +14,9 @@
 /gun/direction 1 0 0
 /gun/polarization 0 0 1
 
-/tracking/verbose
+/tracking/verbose 1
 # Set number of events to simulate
-/run/beamOn 100
+/run/beamOn 1
 
 #----------------------------------------------------------------------------
 # Optional: dump geometry to visualize in GDML
