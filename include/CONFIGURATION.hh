@@ -5,7 +5,7 @@ class CONFIGURATION
 {
 public:
     CONFIGURATION() :
-        set_cryOption(0),
+        set_cryOption(1),
         set_usePreshower(0),
         set_etSdOn(true),
         set_opticalOn(true),

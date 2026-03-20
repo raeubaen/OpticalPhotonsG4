@@ -108,56 +108,107 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     PbF2_prop->DumpTable();
   //optical
 
-  //surfaces
-    G4OpticalSurface *wrapSurf = new G4OpticalSurface("wrapSurf");
-    wrapSurf->SetType(dielectric_LUT);
-    wrapSurf->SetModel(LUT); 
-    // wrapSurf->SetFinish(RoughESR_LUT);
-    // wrapSurf->SetFinish(polishedvm2000air);
-    wrapSurf->SetFinish(polishedlumirrorair);
-    // wrapSurf->SetType(dielectric_dielectric);
-    // wrapSurf->SetModel(unified); 
-    // wrapSurf->SetFinish(polishedfrontpainted);
-    G4MaterialPropertiesTable* wrapSurf_prop = new G4MaterialPropertiesTable();
-    wrapSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {0.995, 0.995}, 2);
-    wrapSurf->SetMaterialPropertiesTable(wrapSurf_prop);
-    
-    G4OpticalSurface *cryGapSurf = new G4OpticalSurface("cryGapSurf");
-    cryGapSurf->SetType(dielectric_dielectric);
-    cryGapSurf->SetModel(unified);
-    cryGapSurf->SetFinish(polished);
-    G4MaterialPropertiesTable* cryGapSurf_prop = new G4MaterialPropertiesTable();
-    cryGapSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-    cryGapSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.00, 1.00}, 2);
-    cryGapSurf->SetMaterialPropertiesTable(cryGapSurf_prop);
 
-    G4OpticalSurface *gapSipmSurf = new G4OpticalSurface("gapSipmSurf");
-    gapSipmSurf->SetType(dielectric_dielectric);
-    gapSipmSurf->SetModel(unified);
-    gapSipmSurf->SetFinish(polished);
-    G4MaterialPropertiesTable* gapSipmSurf_prop = new G4MaterialPropertiesTable();
-    gapSipmSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-    gapSipmSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.55, 1.55}, 2);
-    gapSipmSurf->SetMaterialPropertiesTable(gapSipmSurf_prop);
+    // Photon energy range (~700 nm → 300 nm)
+    std::vector<G4double> PWO_opticalEn = {
+      1.77*eV, 2.00*eV, 2.25*eV, 2.50*eV, 2.75*eV,
+      3.00*eV, 3.25*eV, 3.50*eV, 3.75*eV, 4.00*eV, 4.13*eV
+    };
 
-    G4OpticalSurface *crySipmSurf = new G4OpticalSurface("crySipmSurf");
-    crySipmSurf->SetType(dielectric_dielectric);
-    crySipmSurf->SetModel(unified);
-    crySipmSurf->SetFinish(polished);
-    G4MaterialPropertiesTable* crySipmSurf_prop = new G4MaterialPropertiesTable();
-    crySipmSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-    crySipmSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.55, 1.55}, 2);
-    crySipmSurf->SetMaterialPropertiesTable(crySipmSurf_prop);
+    // Refractive index
+    std::vector<G4double> PWO_rindex = {
+      2.16, 2.18, 2.20, 2.22, 2.24,
+      2.26, 2.28, 2.30, 2.32, 2.34, 2.35
+    };
 
-    G4OpticalSurface *sipmSiSurf = new G4OpticalSurface("sipmSiSurf");
-    sipmSiSurf->SetType(dielectric_metal);
-    sipmSiSurf->SetModel(unified);
-    sipmSiSurf->SetFinish(polished);
-    G4MaterialPropertiesTable* sipmSiSurf_prop = new G4MaterialPropertiesTable();
-    sipmSiSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {0.95, 0.95}, 2); //check
-    sipmSiSurf_prop->AddProperty("EFFICIENCY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-    sipmSiSurf->SetMaterialPropertiesTable(sipmSiSurf_prop);
-  //surfaces
+    // Absorption length
+    std::vector<G4double> PWO_abslen = {
+      0.30*m, 0.30*m, 0.25*m, 0.20*m, 0.15*m,
+      0.12*m, 0.10*m, 0.08*m, 0.05*m, 0.03*m, 0.02*m
+    };
+
+    // Emission spectrum (normalized)
+    std::vector<G4double> PWO_emission = {
+      0.05, 0.15, 0.40, 0.80, 1.00,
+      0.90, 0.70, 0.40, 0.20, 0.10, 0.05
+    };
+
+    const G4int nEntries = PWO_opticalEn.size();
+
+    auto PWO_prop = new G4MaterialPropertiesTable();
+
+    // Optical properties
+    PWO_prop->AddProperty("RINDEX",     PWO_opticalEn.data(), PWO_rindex.data(), nEntries);
+    PWO_prop->AddProperty("ABSLENGTH",  PWO_opticalEn.data(), PWO_abslen.data(), nEntries);
+
+    // === Scintillation (modern Geant4 interface) ===
+    PWO_prop->AddProperty("SCINTILLATIONCOMPONENT1",
+                          PWO_opticalEn.data(), PWO_emission.data(), nEntries);
+
+    PWO_prop->AddConstProperty("SCINTILLATIONYIELD",        50./MeV);
+    PWO_prop->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 6.*ns);
+    PWO_prop->AddConstProperty("SCINTILLATIONYIELD1",        1.0);
+
+    // Optional but useful
+    PWO_prop->AddConstProperty("RESOLUTIONSCALE", 1.0);
+
+    // Attach to material
+    PWO->SetMaterialPropertiesTable(PWO_prop);
+    PWO_prop->DumpTable();
+
+ 
+   //surfaces
+     G4OpticalSurface *wrapSurf = new G4OpticalSurface("wrapSurf");
+     wrapSurf->SetType(dielectric_LUT);
+     wrapSurf->SetModel(LUT); 
+     // wrapSurf->SetFinish(RoughESR_LUT);
+     // wrapSurf->SetFinish(polishedvm2000air);
+     wrapSurf->SetFinish(polishedlumirrorair);
+     // wrapSurf->SetType(dielectric_dielectric);
+     // wrapSurf->SetModel(unified); 
+     // wrapSurf->SetFinish(polishedfrontpainted);
+     G4MaterialPropertiesTable* wrapSurf_prop = new G4MaterialPropertiesTable();
+     wrapSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {0.995, 0.995}, 2);
+     wrapSurf->SetMaterialPropertiesTable(wrapSurf_prop);
+     
+     G4OpticalSurface *cryGapSurf = new G4OpticalSurface("cryGapSurf");
+     cryGapSurf->SetType(dielectric_dielectric);
+     cryGapSurf->SetModel(unified);
+     cryGapSurf->SetFinish(polished);
+     G4MaterialPropertiesTable* cryGapSurf_prop = new G4MaterialPropertiesTable();
+     cryGapSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
+     cryGapSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.00, 1.00}, 2);
+     cryGapSurf->SetMaterialPropertiesTable(cryGapSurf_prop);
+
+     G4OpticalSurface *gapSipmSurf = new G4OpticalSurface("gapSipmSurf");
+     gapSipmSurf->SetType(dielectric_dielectric);
+     gapSipmSurf->SetModel(unified);
+     gapSipmSurf->SetFinish(polished);
+     G4MaterialPropertiesTable* gapSipmSurf_prop = new G4MaterialPropertiesTable();
+     gapSipmSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
+     gapSipmSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.55, 1.55}, 2);
+     gapSipmSurf->SetMaterialPropertiesTable(gapSipmSurf_prop);
+
+     G4OpticalSurface *crySipmSurf = new G4OpticalSurface("crySipmSurf");
+     crySipmSurf->SetType(dielectric_dielectric);
+     crySipmSurf->SetModel(unified);
+     crySipmSurf->SetFinish(polished);
+     G4MaterialPropertiesTable* crySipmSurf_prop = new G4MaterialPropertiesTable();
+     crySipmSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
+     crySipmSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.55, 1.55}, 2);
+     crySipmSurf->SetMaterialPropertiesTable(crySipmSurf_prop);
+
+     G4OpticalSurface *sipmSiSurf = new G4OpticalSurface("sipmSiSurf");
+     sipmSiSurf->SetType(dielectric_metal);
+     sipmSiSurf->SetModel(unified);
+     sipmSiSurf->SetFinish(polished);
+     G4MaterialPropertiesTable* sipmSiSurf_prop = new G4MaterialPropertiesTable();
+     sipmSiSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {0.95, 0.95}, 2); //check
+     sipmSiSurf_prop->AddProperty("EFFICIENCY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
+     sipmSiSurf->SetMaterialPropertiesTable(sipmSiSurf_prop);
+   //surfaces
+
+
 
   //volumes
     G4VSolid* worldBox = new G4Box("world", geo.worldSizeX / 2, geo.worldSizeY / 2, geo.worldSizeZ / 2);
