@@ -123,8 +123,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
     // Absorption length
     std::vector<G4double> PWO_abslen = {
-      0.30*m, 0.30*m, 0.25*m, 0.20*m, 0.15*m,
-      0.12*m, 0.10*m, 0.08*m, 0.05*m, 0.03*m, 0.02*m
+      10*m, 10*m, 10*m, 6*m, 5*m,
+      2.5*m, 2*m, 0.1*m, 0.02*m, 0.01*cm, 0.01*m
     };
 
     // Emission spectrum (normalized)
@@ -145,9 +145,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     PWO_prop->AddProperty("SCINTILLATIONCOMPONENT1",
                           PWO_opticalEn.data(), PWO_emission.data(), nEntries);
 
-    PWO_prop->AddConstProperty("SCINTILLATIONYIELD",        50./MeV);
+    PWO_prop->AddConstProperty("SCINTILLATIONYIELD",        0./MeV);
     PWO_prop->AddConstProperty("SCINTILLATIONTIMECONSTANT1", 6.*ns);
     PWO_prop->AddConstProperty("SCINTILLATIONYIELD1",        1.0);
+    PWO_prop->AddProperty("EFFICIENCY", PbF2_opticalEn, PbF2_zero, PbF2_numEntries);
 
     // Optional but useful
     PWO_prop->AddConstProperty("RESOLUTIONSCALE", 1.0);
@@ -203,8 +204,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      sipmSiSurf->SetModel(unified);
      sipmSiSurf->SetFinish(polished);
      G4MaterialPropertiesTable* sipmSiSurf_prop = new G4MaterialPropertiesTable();
-     sipmSiSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {0.95, 0.95}, 2); //check
-     sipmSiSurf_prop->AddProperty("EFFICIENCY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
+     sipmSiSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {0.15, 0.15}, 2); //check
+     sipmSiSurf_prop->AddProperty("EFFICIENCY", {1.0*eV, 3.25*eV, 3.5*eV, 4.0*eV}, {0.5, 0.4, 0.05, 0.0}, 4);
      sipmSiSurf->SetMaterialPropertiesTable(sipmSiSurf_prop);
    //surfaces
 

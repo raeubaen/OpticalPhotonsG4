@@ -20,8 +20,16 @@ int main(int argc, char** argv)
     runManager->SetUserInitialization(new DetectorConstruction());
 
     auto physicsList = new QGSP_BERT();
-    physicsList->RegisterPhysics(new G4OpticalPhysics());
+    auto opticalPhysics = new G4OpticalPhysics();
+
+    // Aggiungi alla physics list
+    physicsList->RegisterPhysics(opticalPhysics);
+
     runManager->SetUserInitialization(physicsList);
+
+    // Disable Cerenkov before initialization
+    //G4UImanager::GetUIpointer()->ApplyCommand("/process/optical/processActivation Cerenkov false");
+
 
     runManager->Initialize();
 
@@ -65,3 +73,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
+

@@ -5,7 +5,7 @@ EventAction::EventAction(EnergyTimeSD* sd, const std::string& filename)
 : fSD(sd)
 {
     fOut.open(filename, std::ios::out);
-    fOut << "time_ns,energy_eV\n";
+    fOut << "time_ns,energy_eV,x_mm,y_mm,z_mm,id\n";
 }
 
 EventAction::~EventAction()
