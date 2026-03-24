@@ -177,8 +177,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      cryGapSurf->SetModel(unified);
      cryGapSurf->SetFinish(polished);
      G4MaterialPropertiesTable* cryGapSurf_prop = new G4MaterialPropertiesTable();
-     cryGapSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-     cryGapSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.00, 1.00}, 2);
      cryGapSurf->SetMaterialPropertiesTable(cryGapSurf_prop);
 
      G4OpticalSurface *gapSipmSurf = new G4OpticalSurface("gapSipmSurf");
@@ -186,8 +184,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      gapSipmSurf->SetModel(unified);
      gapSipmSurf->SetFinish(polished);
      G4MaterialPropertiesTable* gapSipmSurf_prop = new G4MaterialPropertiesTable();
-     gapSipmSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-     gapSipmSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.55, 1.55}, 2);
      gapSipmSurf->SetMaterialPropertiesTable(gapSipmSurf_prop);
 
      G4OpticalSurface *crySipmSurf = new G4OpticalSurface("crySipmSurf");
@@ -195,8 +191,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
      crySipmSurf->SetModel(unified);
      crySipmSurf->SetFinish(polished);
      G4MaterialPropertiesTable* crySipmSurf_prop = new G4MaterialPropertiesTable();
-     crySipmSurf_prop->AddProperty("REFLECTIVITY", {1.0*eV, 4.0*eV}, {1.0, 1.0}, 2);
-     crySipmSurf_prop->AddProperty("RINDEX", {1.0*eV, 4.0*eV}, {1.55, 1.55}, 2);
      crySipmSurf->SetMaterialPropertiesTable(crySipmSurf_prop);
 
      G4OpticalSurface *sipmSiSurf = new G4OpticalSurface("sipmSiSurf");
